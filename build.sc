@@ -68,7 +68,8 @@ object itest extends MillIntegrationTestModule {
   )
 
   override def testInvocations = Seq(
-    PathRef(testBase / "do-not-fail-on-conflicts") ->  missingCheckTestInvocation
+    PathRef(testBase / "do-not-fail-on-conflicts") ->  missingCheckTestInvocation,
+    PathRef(testBase / "exclude-problematic-dependency") ->  missingCheckTestInvocation
   )
 
 }

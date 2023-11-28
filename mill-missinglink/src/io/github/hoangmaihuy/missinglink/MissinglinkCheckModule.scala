@@ -43,10 +43,10 @@ trait MissinglinkCheckModule extends JavaModule {
 
   private def missinglinkClasspath = T {
     val ivyDepsCp = resolveDeps(T.task {
-      val allIvyDeps = runIvyDeps().map(bindDependency()) ++ transitiveIvyDeps()
-      allIvyDeps.filterNot { boundDep =>
+      val runIvyDepsAfterExclusion = runIvyDeps().map(bindDependency()).filterNot { boundDep =>
         missinglinkExcludedDependencies.exists(_.check(boundDep.dep))
       }
+      runIvyDepsAfterExclusion ++ transitiveIvyDeps()
     })().toSeq
     ivyDepsCp ++ transitiveLocalClasspath() ++ localClasspath()
   }
