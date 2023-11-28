@@ -41,7 +41,7 @@ trait MissinglinkCheckModule extends JavaModule {
   /** Dependencies that are excluded from analysis */
   def missinglinkExcludedDependencies: Seq[DependencyFilter] = Seq.empty
 
-  private def missinglinkClasspath = T {
+  def missinglinkClasspath = T {
     val ivyDepsCp = resolveDeps(T.task {
       val runIvyDepsAfterExclusion = runIvyDeps().map(bindDependency()).filterNot { boundDep =>
         missinglinkExcludedDependencies.exists(_.check(boundDep.dep))
@@ -51,7 +51,7 @@ trait MissinglinkCheckModule extends JavaModule {
     ivyDepsCp ++ transitiveLocalClasspath() ++ localClasspath()
   }
 
-  private def missinglinkClassDirectories = T.traverse(transitiveModuleDeps) { module =>
+  def missinglinkClassDirectories = T.traverse(transitiveModuleDeps.distinct) { module =>
     T.task {
       module.compile().classes.path
     }
@@ -69,7 +69,7 @@ trait MissinglinkCheckModule extends JavaModule {
     )
 
     val classDirectories = missinglinkClassDirectories()
-    val cp = missinglinkClasspath().map(_.path)
+    val cp = missinglinkClasspath().map(_.path).distinct
 
     val conflicts =
       loadArtifactsAndCheckConflicts(
@@ -146,7 +146,7 @@ trait MissinglinkCheckModule extends JavaModule {
       if (scanDependencies)
         classesToArtifact(runtimeArtifacts.flatMap(_.classes.asScala).toMap)
       else
-        toArtifact(classDirectories)
+        toArtifact(classDirectories, log)
 
     if (projectArtifact.classes().isEmpty()) {
       log.info(
@@ -186,9 +186,10 @@ trait MissinglinkCheckModule extends JavaModule {
     finally is.close()
   }
 
-  private def toArtifact(outputDirectories: Seq[os.Path]): Artifact = {
+  private def toArtifact(outputDirectories: Seq[os.Path], logger: Logger): Artifact = {
     val classes = outputDirectories.flatMap { outputDirectory =>
       if (os.exists(outputDirectory)) {
+        logger.debug(s"Walking class directory: ${outputDirectory}")
         os
           .walk(outputDirectory)
           .filter(_.ext == "class")
