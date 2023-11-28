@@ -31,10 +31,8 @@ object `mill-missinglink` extends RootModule with ScalaModule with PublishModule
     organization = "io.github.hoangmaihuy",
     url = "https://github.com/hoangmaihuy/mill-missinglink",
     licenses = Seq(License.`Apache-2.0`),
-    versionControl =
-      VersionControl.github(owner = "hoangmaihuy", repo = "mill-missinglink"),
-    developers =
-      Seq(Developer("hoangmaihuy", "Hoang Mai", "https://github.com/hoangmaihuy"))
+    versionControl = VersionControl.github(owner = "hoangmaihuy", repo = "mill-missinglink"),
+    developers = Seq(Developer("hoangmaihuy", "Hoang Mai", "https://github.com/hoangmaihuy"))
   )
 
   override def artifactName = "mill-missinglink"
@@ -44,6 +42,10 @@ object `mill-missinglink` extends RootModule with ScalaModule with PublishModule
       super.artifactSuffix()
 
   override def scalacOptions = Seq("-Ywarn-unused", "-deprecation")
+
+  override def compileIvyDeps = super.compileIvyDeps() ++ Agg(
+    ivy"com.lihaoyi::mill-scalalib:${millVersion()}"
+  )
 
   override def ivyDeps = Agg(
     ivy"com.spotify:missinglink-core:0.2.9"
