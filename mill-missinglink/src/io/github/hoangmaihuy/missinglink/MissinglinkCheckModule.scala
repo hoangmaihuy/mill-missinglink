@@ -51,6 +51,12 @@ trait MissinglinkCheckModule extends JavaModule {
     ivyDepsCp ++ transitiveLocalClasspath() ++ localClasspath()
   }
 
+  private def missinglinkClassDirectories = T.traverse(transitiveModuleDeps) { module =>
+    T.task {
+      module.compile().classes.path
+    }
+  }
+
   def missinglinkCheck(): Command[Unit] = T.command {
     assert(
       missinglinkIgnoreSourcePackages.isEmpty || missinglinkTargetSourcePackages.isEmpty,
@@ -62,13 +68,13 @@ trait MissinglinkCheckModule extends JavaModule {
       "ignoreDestinationPackages and targetDestinationPackages cannot be defined in the same project."
     )
 
-    val classDirectory = compile().classes.path
+    val classDirectories = missinglinkClassDirectories()
     val cp = missinglinkClasspath().map(_.path)
 
     val conflicts =
       loadArtifactsAndCheckConflicts(
         cp,
-        classDirectory,
+        classDirectories,
         missinglinkScanDependencies,
         T.log
       )
@@ -125,7 +131,7 @@ trait MissinglinkCheckModule extends JavaModule {
 
   private def loadArtifactsAndCheckConflicts(
     cp: Seq[os.Path],
-    classDirectory: os.Path,
+    classDirectories: Seq[os.Path],
     scanDependencies: Boolean,
     log: Logger
   ): Seq[Conflict] = {
@@ -140,7 +146,7 @@ trait MissinglinkCheckModule extends JavaModule {
       if (scanDependencies)
         classesToArtifact(runtimeArtifacts.flatMap(_.classes.asScala).toMap)
       else
-        toArtifact(classDirectory)
+        toArtifact(classDirectories)
 
     if (projectArtifact.classes().isEmpty()) {
       log.info(
@@ -180,15 +186,20 @@ trait MissinglinkCheckModule extends JavaModule {
     finally is.close()
   }
 
-  private def toArtifact(outputDirectory: os.Path): Artifact = {
-    val classes = os
-      .walk(outputDirectory)
-      .filter(_.ext == "class")
-      .map(path => loadClass(path.toIO))
-      .map(c => c.className() -> c)
-      .toMap
+  private def toArtifact(outputDirectories: Seq[os.Path]): Artifact = {
+    val classes = outputDirectories.flatMap { outputDirectory =>
+      if (os.exists(outputDirectory)) {
+        os
+          .walk(outputDirectory)
+          .filter(_.ext == "class")
+          .map(path => loadClass(path.toIO))
+          .map(c => c.className() -> c)
+      } else {
+        Seq.empty
+      }
+    }
 
-    classesToArtifact(classes)
+    classesToArtifact(classes.toMap)
   }
 
   private def bootClasspathToUse(log: Logger): String = {

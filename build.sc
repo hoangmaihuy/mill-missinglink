@@ -63,13 +63,21 @@ object itest extends MillIntegrationTestModule {
 
   def testBase = millSourcePath / "src"
 
-  private def missingCheckTestInvocation = Seq(
+  private def successMissinglinkCheck = Seq(
     TestInvocation.Targets(Seq("missinglinkCheck"))
   )
 
+  private def errorMissinglinkCheck = Seq(
+    TestInvocation.Targets(Seq("missinglinkCheck"), expectedExitCode = 1)
+  )
+
   override def testInvocations = Seq(
-    PathRef(testBase / "do-not-fail-on-conflicts") ->  missingCheckTestInvocation,
-    PathRef(testBase / "exclude-problematic-dependency") ->  missingCheckTestInvocation
+    PathRef(testBase / "do-not-fail-on-conflicts") ->  successMissinglinkCheck,
+    PathRef(testBase / "exclude-problematic-dependency") ->  successMissinglinkCheck,
+    PathRef(testBase / "has-problematic-dependency") -> errorMissinglinkCheck,
+    PathRef(testBase / "ignore-destination-package") ->  successMissinglinkCheck,
+    PathRef(testBase / "ignore-source-package") ->  successMissinglinkCheck,
+    PathRef(testBase / "ignores-unused-dependency") ->  errorMissinglinkCheck
   )
 
 }
