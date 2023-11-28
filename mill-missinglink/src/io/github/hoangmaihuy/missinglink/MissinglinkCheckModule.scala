@@ -51,7 +51,7 @@ trait MissinglinkCheckModule extends JavaModule {
     ivyDepsCp ++ transitiveLocalClasspath() ++ localClasspath()
   }
 
-  def missinglinkCheck: Command[Unit] = T.command {
+  def missinglinkCheck(): Command[Unit] = T.command {
     assert(
       missinglinkIgnoreSourcePackages.isEmpty || missinglinkTargetSourcePackages.isEmpty,
       "ignoreSourcePackages and targetSourcePackages cannot be defined in the same project."

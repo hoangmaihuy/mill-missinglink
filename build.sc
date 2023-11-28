@@ -1,10 +1,12 @@
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
+import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.7.1`
 
 import mill._
 import mill.scalalib._
 import mill.scalalib.publish._
 import mill.scalalib.api.ZincWorkerUtil.scalaNativeBinaryVersion
 
+import de.tobiasroeser.mill.integrationtest._
 import de.tobiasroeser.mill.vcs.version.VcsVersion
 
 def millVersionFile = T.source(PathRef(os.pwd / ".mill-version"))
@@ -13,7 +15,7 @@ def millVersion = T {
   os.read(millVersionFile().path).trim
 }
 
-object `mill-missinglink` extends RootModule with ScalaModule with PublishModule {
+object `mill-missinglink` extends ScalaModule with PublishModule {
 
   override def scalaVersion = "2.13.11"
 
@@ -49,6 +51,24 @@ object `mill-missinglink` extends RootModule with ScalaModule with PublishModule
 
   override def ivyDeps = Agg(
     ivy"com.spotify:missinglink-core:0.2.9"
+  )
+
+}
+
+object itest extends MillIntegrationTestModule {
+
+  override def millTestVersion = millVersion
+
+  override def pluginsUnderTest = Seq(`mill-missinglink`)
+
+  def testBase = millSourcePath / "src"
+
+  private def missingCheckTestInvocation = Seq(
+    TestInvocation.Targets(Seq("missinglinkCheck"))
+  )
+
+  override def testInvocations = Seq(
+    PathRef(testBase / "do-not-fail-on-conflicts") ->  missingCheckTestInvocation
   )
 
 }
