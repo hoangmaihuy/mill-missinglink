@@ -41,23 +41,6 @@ trait MissinglinkCheckModule extends JavaModule {
   /** Dependencies that are excluded from analysis */
   def missinglinkExcludedDependencies: Seq[DependencyFilter] = Seq.empty
 
-  def missinglinkClasspath = T {
-    val ivyDepsCp = resolveDeps(T.task {
-      val runIvyDepsAfterExclusion = (runIvyDeps().map(bindDependency()) ++ transitiveIvyDeps()).filterNot { boundDep =>
-        missinglinkExcludedDependencies.exists(_.check(boundDep.dep))
-      }
-      println(s"runIvyDeps: ${runIvyDepsAfterExclusion}")
-      runIvyDepsAfterExclusion
-    })().toSeq
-    ivyDepsCp ++ transitiveLocalClasspath() ++ localClasspath()
-  }
-
-  def missinglinkClassDirectories = T.traverse(transitiveModuleDeps.distinct) { module =>
-    T.task {
-      module.compile().classes.path
-    }
-  }
-
   def missinglinkCheck(): Command[Unit] = T.command {
     assert(
       missinglinkIgnoreSourcePackages.isEmpty || missinglinkTargetSourcePackages.isEmpty,
@@ -70,12 +53,10 @@ trait MissinglinkCheckModule extends JavaModule {
     )
 
     val classDirectory = compile().classes.path
-    val missinglinkCp = missinglinkClasspath().map(_.path).distinct
     val runCp = runClasspath().map(_.path).distinct
 
     val conflicts =
       loadArtifactsAndCheckConflicts(
-        missinglinkCp,
         runCp,
         classDirectory,
         missinglinkScanDependencies,
@@ -133,19 +114,26 @@ trait MissinglinkCheckModule extends JavaModule {
   }
 
   private def loadArtifactsAndCheckConflicts(
-    missinglinkCp: Seq[os.Path],
-    runCp: Seq[os.Path],
+    cp: Seq[os.Path],
     classDirectory: os.Path,
     scanDependencies: Boolean,
     log: Logger
   ): Seq[Conflict] = {
-    val runtimeArtifactsAfterExclusions = constructArtifacts(missinglinkCp, log)
-    val runtimeArtifacts = constructArtifacts(runCp, log)
+
+    val runtimeArtifacts = constructArtifacts(cp, log)
+
+    val runtimeArtifactsAfterExclusions = runtimeArtifacts
+      .filterNot { artifact =>
+        artifact.path.fold(true) { path =>
+          missinglinkExcludedDependencies.exists(_.check(path))
+        }
+      }
+      .map(_.artifact)
 
     // also need to load JDK classes from the bootstrap classpath
     val bootstrapArtifacts = loadBootstrapArtifacts(bootClasspathToUse(log), log)
 
-    val allArtifacts = runtimeArtifacts ++ bootstrapArtifacts
+    val allArtifacts = runtimeArtifacts.map(_.artifact) ++ bootstrapArtifacts
 
     val projectArtifact =
       if (scanDependencies)
@@ -221,18 +209,18 @@ trait MissinglinkCheckModule extends JavaModule {
     /*}*/
   }
 
-  private def constructArtifacts(cp: Seq[os.Path], log: Logger): List[Artifact] = {
+  private def constructArtifacts(cp: Seq[os.Path], log: Logger): List[ModuleArtifact] = {
     val artifactLoader = new ArtifactLoader
 
     def isValid(entry: File): Boolean =
       (entry.isFile && entry.getPath.endsWith(".jar")) || entry.isDirectory
 
-    def fileToArtifact(f: File): Artifact = {
+    def fileToArtifact(f: os.Path): ModuleArtifact = {
       log.debug("loading artifact for path: " + f)
-      artifactLoader.load(f)
+      ModuleArtifact(artifactLoader.load(f.toIO), Some(f))
     }
 
-    cp.filter(c => isValid(c.toIO)).map(c => fileToArtifact(c.toIO)).toList
+    cp.filter(c => isValid(c.toIO)).map(fileToArtifact).toList
   }
 
   private def loadBootstrapArtifacts(bootstrapClasspath: String, log: Logger): List[Artifact] = {
@@ -243,7 +231,7 @@ trait MissinglinkCheckModule extends JavaModule {
         .split(System.getProperty("path.separator"))
         .map(f => os.Path(f))
 
-      constructArtifacts(cp, log)
+      constructArtifacts(cp, log).map(_.artifact)
     }
   }
 
@@ -336,5 +324,7 @@ trait MissinglinkCheckModule extends JavaModule {
       }
     }
   }
+
+  private final case class ModuleArtifact(artifact: Artifact, path: Option[os.Path] = None)
 
 }

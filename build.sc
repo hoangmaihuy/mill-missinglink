@@ -72,16 +72,16 @@ object itest extends MillIntegrationTestModule {
   )
 
   override def testInvocations = Seq(
-//    PathRef(testBase / "do-not-fail-on-conflicts") ->  successMissinglinkCheck,
-    PathRef(testBase / "exclude-problematic-dependency") ->  successMissinglinkCheck,
-//    PathRef(testBase / "has-problematic-dependency") -> errorMissinglinkCheck,
-//    PathRef(testBase / "ignore-destination-package") ->  successMissinglinkCheck,
-//    PathRef(testBase / "ignore-source-package") ->  successMissinglinkCheck,
-//    PathRef(testBase / "ignores-unused-dependency") ->  errorMissinglinkCheck,
-//    PathRef(testBase / "scans-dependencies") ->  errorMissinglinkCheck,
-//    PathRef(testBase / "target-destination-package") ->  successMissinglinkCheck,
-//    PathRef(testBase / "target-source-package") ->  errorMissinglinkCheck,
-//    PathRef(testBase / "uses-problematic-dependency") ->  errorMissinglinkCheck
+    PathRef(testBase / "do-not-fail-on-conflicts") -> successMissinglinkCheck,
+    PathRef(testBase / "exclude-problematic-dependency") -> successMissinglinkCheck,
+    PathRef(testBase / "has-problematic-dependency") -> errorMissinglinkCheck,
+    PathRef(testBase / "ignore-destination-package") -> successMissinglinkCheck,
+    PathRef(testBase / "ignore-source-package") -> successMissinglinkCheck,
+    PathRef(testBase / "ignores-unused-dependency") -> errorMissinglinkCheck,
+    PathRef(testBase / "scans-dependencies") -> errorMissinglinkCheck,
+    PathRef(testBase / "target-destination-package") -> successMissinglinkCheck,
+    PathRef(testBase / "target-source-package") -> errorMissinglinkCheck,
+    PathRef(testBase / "uses-problematic-dependency") -> errorMissinglinkCheck
   )
 
 }

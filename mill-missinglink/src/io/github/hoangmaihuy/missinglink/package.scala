@@ -37,22 +37,13 @@ package object missinglink {
     def apply(name: String)(filters: Seq[T]): Boolean
   }
 
-  final case class DependencyFilter(f: coursier.core.Dependency => Boolean) {
-    def check(dep: coursier.core.Dependency): Boolean = f(dep)
-  }
+  final case class DependencyFilter(
+    organization: String = "",
+    name: String = ""
+  ) {
 
-  object DependencyFilter {
-
-    def apply(
-      organization: String = "",
-      name: String = "",
-      version: String = ""
-    ): DependencyFilter = {
-      DependencyFilter(dep =>
-        (organization.isEmpty || dep.module.organization.value == organization) &&
-          (name.isEmpty || dep.module.name.value == name) &&
-          (version.isEmpty || dep.version == version)
-      )
+    def check(dependencyPath: os.Path): Boolean = {
+      dependencyPath.toString().contains(organization.replace(".", "/") + "/" + name)
     }
 
   }
