@@ -43,10 +43,11 @@ trait MissinglinkCheckModule extends JavaModule {
 
   def missinglinkClasspath = T {
     val ivyDepsCp = resolveDeps(T.task {
-      val runIvyDepsAfterExclusion = runIvyDeps().map(bindDependency()).filterNot { boundDep =>
+      val runIvyDepsAfterExclusion = (runIvyDeps().map(bindDependency()) ++ transitiveIvyDeps()).filterNot { boundDep =>
         missinglinkExcludedDependencies.exists(_.check(boundDep.dep))
       }
-      runIvyDepsAfterExclusion ++ transitiveIvyDeps()
+      println(s"runIvyDeps: ${runIvyDepsAfterExclusion}")
+      runIvyDepsAfterExclusion
     })().toSeq
     ivyDepsCp ++ transitiveLocalClasspath() ++ localClasspath()
   }
@@ -68,13 +69,15 @@ trait MissinglinkCheckModule extends JavaModule {
       "ignoreDestinationPackages and targetDestinationPackages cannot be defined in the same project."
     )
 
-    val classDirectories = missinglinkClassDirectories()
-    val cp = missinglinkClasspath().map(_.path).distinct
+    val classDirectory = compile().classes.path
+    val missinglinkCp = missinglinkClasspath().map(_.path).distinct
+    val runCp = runClasspath().map(_.path).distinct
 
     val conflicts =
       loadArtifactsAndCheckConflicts(
-        cp,
-        classDirectories,
+        missinglinkCp,
+        runCp,
+        classDirectory,
         missinglinkScanDependencies,
         T.log
       )
@@ -130,12 +133,14 @@ trait MissinglinkCheckModule extends JavaModule {
   }
 
   private def loadArtifactsAndCheckConflicts(
-    cp: Seq[os.Path],
-    classDirectories: Seq[os.Path],
+    missinglinkCp: Seq[os.Path],
+    runCp: Seq[os.Path],
+    classDirectory: os.Path,
     scanDependencies: Boolean,
     log: Logger
   ): Seq[Conflict] = {
-    val runtimeArtifacts = constructArtifacts(cp, log)
+    val runtimeArtifactsAfterExclusions = constructArtifacts(missinglinkCp, log)
+    val runtimeArtifacts = constructArtifacts(runCp, log)
 
     // also need to load JDK classes from the bootstrap classpath
     val bootstrapArtifacts = loadBootstrapArtifacts(bootClasspathToUse(log), log)
@@ -144,9 +149,9 @@ trait MissinglinkCheckModule extends JavaModule {
 
     val projectArtifact =
       if (scanDependencies)
-        classesToArtifact(runtimeArtifacts.flatMap(_.classes.asScala).toMap)
+        classesToArtifact(runtimeArtifactsAfterExclusions.flatMap(_.classes.asScala).toMap)
       else
-        toArtifact(classDirectories, log)
+        toArtifact(classDirectory, log)
 
     if (projectArtifact.classes().isEmpty()) {
       log.info(
@@ -155,10 +160,14 @@ trait MissinglinkCheckModule extends JavaModule {
       )
     }
 
-    log.debug("Checking for conflicts starting from " + projectArtifact.name().name())
-    log.debug("Artifacts included in the project: ")
-    for (artifact <- runtimeArtifacts) {
-      log.debug("    " + artifact.name().name())
+    println("Checking for conflicts starting from " + projectArtifact.name().name())
+    println("Artifacts included in the project: ")
+    for (artifact <- runtimeArtifactsAfterExclusions) {
+      println("    " + artifact.name().name())
+    }
+    println("All artifacts: ")
+    for (artifact <- allArtifacts) {
+      println("    " + artifact.name().name())
     }
 
     val conflictChecker = new ConflictChecker
@@ -166,7 +175,7 @@ trait MissinglinkCheckModule extends JavaModule {
     val conflicts =
       conflictChecker.check(
         projectArtifact,
-        runtimeArtifacts.asJava,
+        runtimeArtifactsAfterExclusions.asJava,
         allArtifacts.asJava
       )
 
@@ -186,18 +195,16 @@ trait MissinglinkCheckModule extends JavaModule {
     finally is.close()
   }
 
-  private def toArtifact(outputDirectories: Seq[os.Path], logger: Logger): Artifact = {
-    val classes = outputDirectories.flatMap { outputDirectory =>
-      if (os.exists(outputDirectory)) {
-        logger.debug(s"Walking class directory: ${outputDirectory}")
-        os
-          .walk(outputDirectory)
-          .filter(_.ext == "class")
-          .map(path => loadClass(path.toIO))
-          .map(c => c.className() -> c)
-      } else {
-        Seq.empty
-      }
+  private def toArtifact(outputDirectory: os.Path, logger: Logger): Artifact = {
+    val classes = if (os.exists(outputDirectory)) {
+      logger.debug(s"Walking class directory: ${outputDirectory}")
+      os
+        .walk(outputDirectory)
+        .filter(_.ext == "class")
+        .map(path => loadClass(path.toIO))
+        .map(c => c.className() -> c)
+    } else {
+      Seq.empty
     }
 
     classesToArtifact(classes.toMap)
