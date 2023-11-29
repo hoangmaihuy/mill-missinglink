@@ -148,14 +148,14 @@ trait MissinglinkCheckModule extends JavaModule {
       )
     }
 
-    println("Checking for conflicts starting from " + projectArtifact.name().name())
-    println("Artifacts included in the project: ")
+    log.debug("Checking for conflicts starting from " + projectArtifact.name().name())
+    log.debug("Artifacts included in the project: ")
     for (artifact <- runtimeArtifactsAfterExclusions) {
-      println("    " + artifact.name().name())
+      log.debug("    " + artifact.name().name())
     }
-    println("All artifacts: ")
+    log.debug("All artifacts: ")
     for (artifact <- allArtifacts) {
-      println("    " + artifact.name().name())
+      log.debug("    " + artifact.name().name())
     }
 
     val conflictChecker = new ConflictChecker
