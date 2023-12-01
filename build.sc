@@ -1,5 +1,6 @@
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
 import $ivy.`de.tototec::de.tobiasroeser.mill.integrationtest::0.7.1`
+import $ivy.`io.chris-kipp::mill-ci-release::0.1.9`
 
 import mill._
 import mill.scalalib._
@@ -7,7 +8,8 @@ import mill.scalalib.publish._
 import mill.scalalib.api.ZincWorkerUtil.scalaNativeBinaryVersion
 
 import de.tobiasroeser.mill.integrationtest._
-import de.tobiasroeser.mill.vcs.version.VcsVersion
+import io.kipp.mill.ci.release.CiReleaseModule
+import io.kipp.mill.ci.release.SonatypeHost
 
 def millVersionFile = T.source(PathRef(os.pwd / ".mill-version"))
 
@@ -15,22 +17,11 @@ def millVersion = T {
   os.read(millVersionFile().path).trim
 }
 
-object `mill-missinglink` extends ScalaModule with PublishModule {
+object `mill-missinglink` extends ScalaModule with CiReleaseModule {
 
   override def scalaVersion = "2.13.11"
 
-  def sonatypeUri: String = "https://s01.oss.sonatype.org/service/local"
-
-  def sonatypeSnapshotUri: String = "https://s01.oss.sonatype.org/content/repositories/snapshots"
-
-  override def publishVersion: T[String] = T {
-    VcsVersion
-      .vcsState()
-      .format(
-        dirtyHashDigits = 0,
-        untaggedSuffix = "-SNAPSHOT"
-      )
-  }
+  override def sonatypeHost = Some(SonatypeHost.s01)
 
   override def versionScheme: T[Option[VersionScheme]] = T(Option(VersionScheme.EarlySemVer))
 
