@@ -19,6 +19,10 @@ object `mill-missinglink` extends ScalaModule with PublishModule {
 
   override def scalaVersion = "2.13.11"
 
+  def sonatypeUri: String = "https://s01.oss.sonatype.org/service/local"
+
+  def sonatypeSnapshotUri: String = "https://s01.oss.sonatype.org/content/repositories/snapshots"
+
   override def publishVersion: T[String] = T {
     VcsVersion
       .vcsState()
@@ -27,6 +31,8 @@ object `mill-missinglink` extends ScalaModule with PublishModule {
         untaggedSuffix = "-SNAPSHOT"
       )
   }
+
+  override def versionScheme: T[Option[VersionScheme]] = T(Option(VersionScheme.EarlySemVer))
 
   override def pomSettings = PomSettings(
     description = "Missinglink for Mill",
