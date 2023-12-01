@@ -64,11 +64,10 @@ jobs:
       - name: Check publishing local
         run: ./millw -i __.publishLocal testRepo
 
-      - name: Setup GPG secrets
-        run: |
-          gpg --version
-          cat <(echo "${{ secrets.GPG_SECRET_KEY }}") | gpg --batch --import
-          gpg --list-secret-keys --keyid-format LONG
-
       - name: Publish to Maven Central
-        run: ./millw -i mill.scalalib.PublishModule/publishAll --sonatypeCreds "${{ secrets.SONATYPE_CREDS }}" --gpgArgs "--passphrase=${{ secrets.GPG_SECRET_KEY_PASS}},--batch,--yes,-a,-b,--pinentry-mode,loopback" --publishArtifacts __.publishArtifacts --readTimeout 600000 --awaitTimeout 600000 --release true --signed true
+        run: ./millw -i io.kipp.mill.ci.release.ReleaseModule/publishAll
+        env:
+          PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+          PGP_SECRET: ${{ secrets.PGP_SECRET }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
