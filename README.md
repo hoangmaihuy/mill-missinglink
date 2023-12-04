@@ -58,8 +58,8 @@ You can exclude certain dependencies using `DependencyFilter`:
 
 ```scala
 object example extends MissinglinkCheckModule {
-  missinglinkExcludedDependencies = Seq(DependencyFilter(organization = "com.google.guava"))
-  missinglinkExcludedDependencies = Seq(DependencyFilter(organization = "ch.qos.logback", name = "logback-core"))
+  override def missinglinkExcludedDependencies = Seq(DependencyFilter(organization = "com.google.guava"))
+  override def missinglinkExcludedDependencies = Seq(DependencyFilter(organization = "ch.qos.logback", name = "logback-core"))
 }
 ```
 
