@@ -11,7 +11,11 @@ package object missinglink {
 
   }
 
+  implicit val ignoredPackageRw: upickle.default.ReadWriter[IgnoredPackage] = upickle.default.macroRW
+
   private[missinglink] implicit object IgnoredPackages extends PackageFilters[IgnoredPackage] {
+
+
     def apply(name: String)(filters: Seq[IgnoredPackage]): Boolean = filters.forall(_.apply(name))
   }
 
@@ -21,6 +25,8 @@ package object missinglink {
       packageName == name || (targetSubpackages && packageName.startsWith(s"$name."))
 
   }
+
+  implicit val targetedPackageRw: upickle.default.ReadWriter[TargetedPackage] = upickle.default.macroRW
 
   private[missinglink] implicit object TargetedPackages extends PackageFilters[TargetedPackage] {
 
@@ -47,5 +53,7 @@ package object missinglink {
     }
 
   }
+
+  implicit val dependencyFilterRw: upickle.default.ReadWriter[DependencyFilter] = upickle.default.macroRW
 
 }
