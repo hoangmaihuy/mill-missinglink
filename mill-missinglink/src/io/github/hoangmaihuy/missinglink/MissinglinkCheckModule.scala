@@ -41,6 +41,10 @@ trait MissinglinkCheckModule extends JavaModule {
   /** Dependencies that are excluded from analysis */
   def missinglinkExcludedDependencies: T[Seq[DependencyFilter]] = T { Seq.empty[DependencyFilter] }
 
+  def missinglinkCheckCached = T {
+    missinglinkCheck()
+  }
+
   def missinglinkCheck(): Command[Unit] = T.command {
     assert(
       missinglinkIgnoreSourcePackages().isEmpty || missinglinkTargetSourcePackages().isEmpty,
