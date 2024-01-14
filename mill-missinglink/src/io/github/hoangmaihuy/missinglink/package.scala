@@ -15,7 +15,6 @@ package object missinglink {
 
   private[missinglink] implicit object IgnoredPackages extends PackageFilters[IgnoredPackage] {
 
-
     def apply(name: String)(filters: Seq[IgnoredPackage]): Boolean = filters.forall(_.apply(name))
   }
 

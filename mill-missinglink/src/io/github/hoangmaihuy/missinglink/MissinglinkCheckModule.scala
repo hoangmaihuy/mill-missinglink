@@ -31,7 +31,7 @@ trait MissinglinkCheckModule extends JavaModule {
   /** Optional list of packages to ignore conflicts where the destination/called-side of the conflict is in one of the
     * specified packages.
     */
-  def missinglinkIgnoreDestinationPackages: T[Seq[IgnoredPackage]]  = T { Seq.empty[IgnoredPackage] }
+  def missinglinkIgnoreDestinationPackages: T[Seq[IgnoredPackage]] = T { Seq.empty[IgnoredPackage] }
 
   /** Optional list of source packages to specifically target conflicts in. Cannot be used with
     * missinglinkIgnoreDestinationPackages.
