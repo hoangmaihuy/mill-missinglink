@@ -13,5 +13,4 @@ object `exclude-problematic-dependency` extends RootModule with ScalaModule with
 
   override def missinglinkExcludedDependencies = Seq(DependencyFilter(organization = "com.google.guava"))
 
-
 }

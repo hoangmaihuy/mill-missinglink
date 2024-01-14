@@ -14,5 +14,4 @@ object `target-destination-package` extends RootModule with ScalaModule with Mis
   // Will ignore Guava conflict
   override def missinglinkTargetDestinationPackages = Seq(TargetedPackage("test"))
 
-
 }

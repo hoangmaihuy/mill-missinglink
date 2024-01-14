@@ -13,5 +13,4 @@ object `do-not-fail-on-conflicts` extends RootModule with ScalaModule with Missi
 
   override def missinglinkFailOnConflicts = false
 
-
 }
