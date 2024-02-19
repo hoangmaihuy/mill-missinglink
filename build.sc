@@ -47,7 +47,7 @@ object `mill-missinglink` extends ScalaModule with CiReleaseModule {
   )
 
   override def ivyDeps = Agg(
-    ivy"com.spotify:missinglink-core:0.2.9"
+    ivy"com.spotify:missinglink-core:0.2.11"
   )
 
 }
