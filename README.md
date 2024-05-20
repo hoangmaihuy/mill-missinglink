@@ -33,7 +33,7 @@ It can be disabled by the `missinglinkFailOnConflicts` setting:
 
 ```scala
 object example extends MissinglinkCheckModule {
-  overide def missinglinkFailOnConflicts = false
+  override def missinglinkFailOnConflicts = false
 }
 ```
 
