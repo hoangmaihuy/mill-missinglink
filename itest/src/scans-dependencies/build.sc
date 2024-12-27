@@ -7,13 +7,13 @@ object `scans-dependencies` extends RootModule with ScalaModule with Missinglink
 
   object `has-problematic-dependency` extends ScalaModule {
 
-    override def scalaVersion = "2.13.14"
+    override def scalaVersion = "2.13.15"
 
     override def ivyDeps = super.ivyDeps() ++ Seq(ivy"com.google.guava:guava:14.0")
 
   }
 
-  override def scalaVersion = "2.13.14"
+  override def scalaVersion = "2.13.15"
 
   override def ivyDeps = super.ivyDeps() ++ Seq(ivy"com.google.guava:guava:18.0")
 
