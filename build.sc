@@ -19,7 +19,7 @@ def millVersion = T {
 
 object `mill-missinglink` extends ScalaModule with CiReleaseModule {
 
-  override def scalaVersion = "2.13.14"
+  override def scalaVersion = "2.13.16"
 
   override def sonatypeHost = Some(SonatypeHost.s01)
 
