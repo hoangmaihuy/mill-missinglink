@@ -1,0 +1,107 @@
+import mill.*
+import mill.scalalib.*
+import mill.scalalib.publish.*
+import mill.main.VcsVersion
+import mill.util.BuildInfo.{millBinPlatform, millVersion}
+
+object Versions {
+  lazy val scala = "3.7.0"
+  lazy val missinglink = "0.2.11"
+}
+
+object `mill-missinglink` extends ScalaModule with SonatypeCentralPublishModule {
+
+  def isTesting: T[Boolean] = Task.Input {
+    Task.env.get("MILL_TEST_MODE").exists(_.toBoolean)
+  }
+
+  override def publishVersion = Task {
+    if (isTesting()) {
+      "test"
+    } else {
+      VcsVersion.vcsState().format()
+    }
+  }
+
+  override def scalaVersion = Versions.scala
+
+  override def versionScheme: T[Option[VersionScheme]] = Task(Option(VersionScheme.EarlySemVer))
+
+  override def pomSettings = PomSettings(
+    description = "Missinglink for Mill",
+    organization = "io.github.hoangmaihuy",
+    url = "https://github.com/hoangmaihuy/mill-missinglink",
+    licenses = Seq(License.`Apache-2.0`),
+    versionControl = VersionControl.github(owner = "hoangmaihuy", repo = "mill-missinglink"),
+    developers = Seq(Developer("hoangmaihuy", "Hoang Mai", "https://github.com/hoangmaihuy"))
+  )
+
+  override def artifactName = "mill-missinglink"
+
+  override def platformSuffix = s"_mill$millBinPlatform"
+
+  override def scalacOptions = Seq("-Wunused:all", "-deprecation")
+
+  override def mvnDeps = Seq(
+    mvn"com.lihaoyi::mill-libs:$millVersion",
+    mvn"com.spotify:missinglink-core:${Versions.missinglink}"
+  )
+
+  object test extends ScalaTests with TestModule.Utest {
+    def mvnDeps = Seq(mvn"com.lihaoyi::mill-testkit:$millVersion")
+
+    def forkEnv = Task {
+      val p = Task.dest / "mill/local-test-overrides" / s"${`mill-missinglink`.artifactId()}"
+      os.write(
+        p,
+        `mill-missinglink`.localClasspath().map(_.path).mkString("\n"),
+        createFolders = true
+      )
+      Map(
+        "MILL_EXECUTABLE_PATH" -> millExecutable.assembly().path.toString,
+        "MILL_LOCAL_TEST_OVERRIDE_CLASSPATH" ->
+          (sys.env.get("MILL_LOCAL_TEST_OVERRIDE_CLASSPATH") ++ Seq(Task.dest)).mkString(";")
+      )
+    }
+
+    // Create a Mill executable configured for testing our plugin
+    object millExecutable extends JavaModule {
+      def mvnDeps = Seq(mvn"com.lihaoyi:mill-runner-launcher_3:$millVersion")
+
+      def mainClass = Some("mill.launcher.MillLauncherMain")
+    }
+
+  }
+
+}
+
+// object itest extends MillIntegrationTestModule {
+
+//   override def millTestVersion = millVersion
+
+//   override def pluginsUnderTest = Seq(`mill-missinglink`)
+
+//   def testBase = millSourcePath / "src"
+
+//   private def successMissinglinkCheck = Seq(
+//     TestInvocation.Targets(Seq("missinglinkCheck"))
+//   )
+
+//   private def errorMissinglinkCheck = Seq(
+//     TestInvocation.Targets(Seq("missinglinkCheck"), expectedExitCode = 1)
+//   )
+
+//   override def testInvocations = Seq(
+//     PathRef(testBase / "do-not-fail-on-conflicts") -> successMissinglinkCheck,
+//     PathRef(testBase / "exclude-problematic-dependency") -> errorMissinglinkCheck,
+//     PathRef(testBase / "has-problematic-dependency") -> errorMissinglinkCheck,
+//     PathRef(testBase / "ignore-destination-package") -> successMissinglinkCheck,
+//     PathRef(testBase / "ignore-source-package") -> successMissinglinkCheck,
+//     PathRef(testBase / "ignores-unused-dependency") -> successMissinglinkCheck,
+//     PathRef(testBase / "scans-dependencies") -> errorMissinglinkCheck,
+//     PathRef(testBase / "target-destination-package") -> successMissinglinkCheck,
+//     PathRef(testBase / "target-source-package") -> errorMissinglinkCheck,
+//     PathRef(testBase / "uses-problematic-dependency") -> errorMissinglinkCheck
+//   )
+
+// }
