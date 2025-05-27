@@ -1,0 +1,17 @@
+//| mvnDeps:
+//| - io.github.hoangmaihuy::mill-missinglink::test
+
+import mill.*, scalalib.*
+import io.github.hoangmaihuy.missinglink.*
+
+object example extends  ScalaModule with MissinglinkCheckModule {
+
+  override def scalaVersion = "3.7.0"
+
+  override def runMvnDeps = super.runMvnDeps() ++ Seq(mvn"com.google.guava:guava:18.0")
+
+  override def mvnDeps = super.mvnDeps() ++ Seq(mvn"com.google.guava:guava:14.0")
+
+  override def missinglinkTargetSourcePackages = Seq(TargetedPackage("test"))
+
+}

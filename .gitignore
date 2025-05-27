@@ -8,3 +8,5 @@ hs_err_pid*
 .vscode
 .bsp
 out
+.metals
+**.DS_Store

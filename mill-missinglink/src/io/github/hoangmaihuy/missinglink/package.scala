@@ -1,6 +1,5 @@
 package io.github.hoangmaihuy
 
-import mill.scalalib.BoundDep
 
 package object missinglink {
 

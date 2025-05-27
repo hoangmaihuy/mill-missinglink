@@ -1,51 +1,51 @@
 package io.github.hoangmaihuy.missinglink
 
 import java.io.{File, FileInputStream}
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 import com.spotify.missinglink.Conflict.ConflictCategory
-import com.spotify.missinglink.datamodel.{Dependency, _}
+import com.spotify.missinglink.datamodel.{Dependency, *}
 import com.spotify.missinglink.{ArtifactLoader, Conflict, ConflictChecker, Java9ModuleLoader}
-import mill._
-import mill.api._
-import mill.scalalib._
+import mill.*
+import mill.api.*
+import mill.scalalib.*
 
 trait MissinglinkCheckModule extends JavaModule {
 
   /** Fail the build if any conflicts are found */
-  def missinglinkFailOnConflicts: T[Boolean] = T { true }
+  def missinglinkFailOnConflicts: T[Boolean] = Task { true }
 
   /** Also scan all dependencies */
-  def missinglinkScanDependencies: T[Boolean] = T { false }
+  def missinglinkScanDependencies: T[Boolean] = Task { false }
 
   /** Optional list of packages to ignore conflicts where the source of the conflict is in one of the specified
     * packages.
     */
-  def missinglinkIgnoreSourcePackages: T[Seq[IgnoredPackage]] = T { Seq.empty[IgnoredPackage] }
+  def missinglinkIgnoreSourcePackages: T[Seq[IgnoredPackage]] = Task { Seq.empty[IgnoredPackage] }
 
   /** Optional list of source packages to specifically target conflicts in. Cannot be used with
     * missinglinkIgnoreSourcePackages.
     */
-  def missinglinkTargetSourcePackages: T[Seq[TargetedPackage]] = T { Seq.empty[TargetedPackage] }
+  def missinglinkTargetSourcePackages: T[Seq[TargetedPackage]] = Task { Seq.empty[TargetedPackage] }
 
   /** Optional list of packages to ignore conflicts where the destination/called-side of the conflict is in one of the
     * specified packages.
     */
-  def missinglinkIgnoreDestinationPackages: T[Seq[IgnoredPackage]] = T { Seq.empty[IgnoredPackage] }
+  def missinglinkIgnoreDestinationPackages: T[Seq[IgnoredPackage]] = Task { Seq.empty[IgnoredPackage] }
 
   /** Optional list of source packages to specifically target conflicts in. Cannot be used with
     * missinglinkIgnoreDestinationPackages.
     */
-  def missinglinkTargetDestinationPackages: T[Seq[TargetedPackage]] = T { Seq.empty[TargetedPackage] }
+  def missinglinkTargetDestinationPackages: T[Seq[TargetedPackage]] = Task { Seq.empty[TargetedPackage] }
 
   /** Dependencies that are excluded from analysis */
-  def missinglinkExcludedDependencies: T[Seq[DependencyFilter]] = T { Seq.empty[DependencyFilter] }
+  def missinglinkExcludedDependencies: T[Seq[DependencyFilter]] = Task { Seq.empty[DependencyFilter] }
 
-  def missinglinkCheckCached = T {
-    missinglinkCheck()
+  def missinglinkCheckCached = Task {
+    missinglinkCheck()()
   }
 
-  def missinglinkCheck(): Command[Unit] = T.command {
+  def missinglinkCheck(): Command[Unit] = Task.Command {
     assert(
       missinglinkIgnoreSourcePackages().isEmpty || missinglinkTargetSourcePackages().isEmpty,
       "ignoreSourcePackages and targetSourcePackages cannot be defined in the same project."
@@ -65,31 +65,31 @@ trait MissinglinkCheckModule extends JavaModule {
         classDirectory,
         missinglinkScanDependencies(),
         missinglinkExcludedDependencies(),
-        T.log
+        Task.log
       )
 
     val conflictFilters = filterConflicts(
       missinglinkIgnoreSourcePackages(),
       "missinglinkIgnoreSourcePackages",
-      T.log,
+      Task.log,
       "source",
       _.fromClass
     ) andThen filterConflicts(
       missinglinkTargetSourcePackages(),
       "missinglinkTargetSourcePackages",
-      T.log,
+      Task.log,
       "source",
       _.fromClass
     ) andThen filterConflicts(
       missinglinkIgnoreDestinationPackages(),
       "missinglinkIgnoreDestinationPackages",
-      T.log,
+      Task.log,
       "destination",
       _.targetClass
     ) andThen filterConflicts(
       missinglinkTargetDestinationPackages(),
       "missinglinkTargetDestinationPackages",
-      T.log,
+      Task.log,
       "destination",
       _.targetClass
     )
@@ -106,15 +106,15 @@ trait MissinglinkCheckModule extends JavaModule {
         ""
       }
 
-      T.log.info(s"$filteredTotal conflicts found! $diffMessage")
+      Task.log.info(s"$filteredTotal conflicts found! $diffMessage")
 
-      outputConflicts(filteredConflicts, T.log)
+      outputConflicts(filteredConflicts, Task.log)
 
       if (missinglinkFailOnConflicts()) {
         throw new Exception(s"There were $filteredTotal conflicts")
       }
     } else {
-      T.log.info("No conflicts found")
+      Task.log.info("No conflicts found")
     }
   }
 
