@@ -4,16 +4,17 @@ A Mill plugin for [missinglink](https://github.com/spotify/missinglink), ported 
 
 ## Usage
 
-Add the following lines in `build.sc`:
+Add the following lines in `build.mill`:
 
 ```scala
-import $ivy.`io.github.hoangmaihuy::mill-missinglink::<latest-version>`
+//| mvnDeps:
+//| - io.github.hoangmaihuy::mill-missinglink::<latest-version>
 ```
 
 Extends `MissinglinkCheckModule`
 
 ```scala
-import io.github.hoangmaihuy.missinglink._
+import io.github.hoangmaihuy.missinglink.*
 
 object example extends MissinglinkCheckModule
 ```

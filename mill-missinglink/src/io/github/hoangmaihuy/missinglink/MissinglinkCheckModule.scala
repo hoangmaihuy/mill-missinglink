@@ -231,11 +231,12 @@ trait MissinglinkCheckModule extends JavaModule {
 
   private def loadBootstrapArtifacts(bootstrapClasspath: String, log: Logger): List[Artifact] = {
     if (bootstrapClasspath == null) {
-      Java9ModuleLoader.getJava9ModuleArtifacts((s, ex) => log.error(s)).asScala.toList
+      Java9ModuleLoader.getJava9ModuleArtifacts((s, _) => log.error(s)).asScala.toList
     } else {
       val cp = bootstrapClasspath
         .split(System.getProperty("path.separator"))
         .map(f => os.Path(f))
+        .toSeq
 
       constructArtifacts(cp, log).map(_.artifact)
     }
