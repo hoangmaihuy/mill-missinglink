@@ -5,8 +5,9 @@ import mill.util.VcsVersion
 import mill.util.BuildInfo.{millBinPlatform, millVersion}
 
 object Versions {
-  lazy val scala = "3.7.0"
+  lazy val scala = "3.7.4"
   lazy val missinglink = "0.2.11"
+  lazy val asmTree = "9.9.1"
 }
 
 object `mill-missinglink` extends ScalaModule with SonatypeCentralPublishModule {
@@ -45,6 +46,8 @@ object `mill-missinglink` extends ScalaModule with SonatypeCentralPublishModule 
   override def mvnDeps = Seq(
     mvn"com.lihaoyi::mill-libs:$millVersion",
     mvn"com.spotify:missinglink-core:${Versions.missinglink}"
+      .exclude("org.ow2.asm" -> "asm-tree"),
+    mvn"org.ow2.asm:asm-tree:${Versions.asmTree}"
   )
 
   object test extends ScalaTests with TestModule.Utest {
