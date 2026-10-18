@@ -7,7 +7,7 @@ import mill.util.BuildInfo.{millBinPlatform, millVersion}
 object Versions {
   lazy val scala = "3.7.4"
   lazy val missinglink = "0.2.11"
-  lazy val asmTree = "9.9.1"
+  lazy val asmTree = "9.11.1"
 }
 
 object `mill-missinglink` extends ScalaModule with SonatypeCentralPublishModule {
